@@ -1,3 +1,12 @@
+```bash
+
+- pnpm --filter backend dev
+- npm install -g pm2
+- pm2 start pnpm --name backend -- run dev --filter backend
+- pm2 save
+
+```
+
 To deploy your monorepo app with a frontend (Next.js) and backend (Node.js) to either **EC2** or **Vercel**, follow these steps:
 
 ---

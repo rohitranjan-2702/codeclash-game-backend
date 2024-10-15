@@ -1,4 +1,22 @@
--  pnpm --filter backend dev
-- npm install -g pm2
-- pm2 start pnpm --name backend -- run dev --filter backend
-- pm2 save
+# Techstack:
+
+- Nextjs
+- Typescript
+- Socket.io
+- Kafka
+- NodeJS
+- Prisma
+- MongoDB
+- Turborepo
+
+# How to run the project:
+
+1. Clone the project
+   - git clone https://github.com/rohitranjan-2702/game-monorepo.git
+2. Install dependencies
+   - pnpm install
+3. Run the project
+   - pnpm build
+   - pnpm dev
+4. Open the browser and navigate to http://localhost:3000
+5. You are ready to go!
