@@ -12,7 +12,7 @@
 # How to run the project:
 
 1. Clone the project
-   - git clone https://github.com/rohitranjan-2702/game-monorepo.git
+   - git clone https://github.com/rohitranjan-2702/random-monorepo-game.git
 2. Install dependencies
    - pnpm install
 3. Run the project
