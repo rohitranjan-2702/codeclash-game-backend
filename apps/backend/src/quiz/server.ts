@@ -3,9 +3,7 @@ import { GameState } from "./Game";
 import { SocketManager } from "./SocketManager";
 import { KafkaProducer } from "./KafkaProducer";
 
-const KAFKA_BROKERS = [
-  "cs76iekk86bm353tfim0.any.eu-central-1.mpx.prd.cloud.redpanda.com:9092",
-]; // Replace with your Redpanda brokers
+const KAFKA_BROKERS = ["localhost:9092"]; // Replace with your Redpanda brokers
 const KAFKA_CLIENT_ID = "quiz-game-producer";
 
 async function main() {
