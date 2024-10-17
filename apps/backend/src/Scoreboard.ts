@@ -1,30 +1,25 @@
 import { EventEmitter } from "events";
-
-interface Player {
-  id: string;
-  name: string;
-  score: number;
-}
+import { LeaderboardItem, Player } from "./types/types";
 
 export class Scoreboard extends EventEmitter {
   private scores: Map<string, number>;
-  private playerNames: Map<string, string>;
+  private players: Map<string, Player>;
 
   constructor() {
     super();
     this.scores = new Map();
-    this.playerNames = new Map();
+    this.players = new Map();
   }
 
-  public addPlayer(playerId: string, playerName: string): void {
+  public addPlayer(playerId: string, player: Player): void {
     this.scores.set(playerId, 0);
-    this.playerNames.set(playerId, playerName);
+    this.players.set(playerId, player);
     this.emitUpdate();
   }
 
   public removePlayer(playerId: string): void {
     this.scores.delete(playerId);
-    this.playerNames.delete(playerId);
+    this.players.delete(playerId);
     this.emitUpdate();
   }
 
@@ -38,14 +33,16 @@ export class Scoreboard extends EventEmitter {
     return this.scores.get(playerId) || 0;
   }
 
-  public getLeaderboard(): Player[] {
-    const leaderboard = Array.from(this.scores.entries()).map(
-      ([id, score]) => ({
-        id,
-        name: this.playerNames.get(id) || "Unknown",
-        score,
-      })
-    );
+  public getLeaderboard(): LeaderboardItem[] {
+    const leaderboard: LeaderboardItem[] = Array.from(
+      this.scores.entries()
+    ).map(([id, score]) => ({
+      id,
+      name: this.players.get(id)?.name || "Unknown",
+      score,
+      userId: this.players.get(id)?.userId || "",
+      avatar: this.players.get(id)?.avatar || "",
+    }));
 
     return leaderboard.sort((a, b) => b.score - a.score);
   }

@@ -52,6 +52,7 @@ class SocketManager {
       return;
     }
 
+    // broadcasting the message to all users in the room
     users.forEach((user) => {
       user.socket.send(message);
     });

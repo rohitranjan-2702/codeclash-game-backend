@@ -1,26 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
 import { Scoreboard } from "./Scoreboard";
 import { randomUUID } from "node:crypto";
-
-// Interfaces
-interface Player {
-  id: string;
-  name: string;
-}
-
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswer: number;
-}
+import { GameStatus, Player, Question } from "./types/types";
 
 // Enums
-enum GameStatus {
-  Waiting,
-  InProgress,
-  Finished,
-}
 
 // Observer pattern for game events
 interface GameObserver {
@@ -31,6 +14,7 @@ interface GameObserver {
 export class Quiz {
   private static instance: Quiz;
   public quizId: string;
+  public quizName: string;
   private players: Map<string, Player>;
   private questions: Question[];
   private currentQuestionIndex: number;
@@ -38,8 +22,9 @@ export class Quiz {
   private observers: GameObserver[];
   private scoreboard: Scoreboard;
 
-  private constructor(quizId?: string) {
+  constructor(quizName: string, quizId?: string) {
     this.players = new Map();
+    this.quizName = quizName ?? "Random Quiz";
     this.questions = [];
     this.currentQuestionIndex = 0;
     this.status = GameStatus.Waiting;
@@ -52,18 +37,17 @@ export class Quiz {
 
   public static getInstance(): Quiz {
     if (!Quiz.instance) {
-      Quiz.instance = new Quiz();
+      Quiz.instance = new Quiz("Random Quiz");
     }
     return Quiz.instance;
   }
 
   // Player management
-  public addPlayer(name: string): string {
-    const id = uuidv4();
-    this.players.set(id, { id, name });
-    this.scoreboard.addPlayer(id, name);
+  public addPlayer(user: Player): string {
+    this.players.set(user.id, user);
+    this.scoreboard.addPlayer(user.id, user);
     this.notifyObservers();
-    return id;
+    return user.id;
   }
 
   public removePlayer(id: string): void {

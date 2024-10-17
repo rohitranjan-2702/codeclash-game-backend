@@ -1,6 +1,7 @@
 import { WebSocket } from "ws";
 import { Quiz } from "./Quiz";
 import { socketManager, User } from "./SocketManager";
+// import {  } from "./types/types";
 
 export class GameManager {
   private games: Quiz[];
@@ -33,9 +34,67 @@ export class GameManager {
   }
 
   private addHandler(user: User) {
-    user.socket.on("message", async (data) => {
+    const socket = user.socket;
+    socket.send(
+      JSON.stringify({
+        type: "USER_CONNECTED",
+        userId: user.id,
+        name: user.name,
+      })
+    );
+
+    // socket.emit(
+    //   "GAME_ALERTS",
+    //   JSON.stringify({
+    //     type: "USER_CONNECTED",
+    //     userId: user.id,
+    //     name: user.name,
+    //   })
+    // );
+    socket.on("message", async (data) => {
       const message = JSON.parse(data.toString());
       console.log(message);
+      // write game logic here
+      switch (message.type) {
+        // search for a pending game in the list of games, if not found, create a new one
+        case "INIT_GAME":
+          if (this.pendingGameId) {
+            const quiz = this.games.find(
+              (x) => x.quizId === this.pendingGameId
+            );
+            if (!quiz) {
+              console.error("Pending game not found?");
+              return;
+            }
+          }
+          const newQuiz = new Quiz(message.quizName);
+          this.games.push(newQuiz);
+          console.log("New quiz created:", newQuiz);
+
+          this.pendingGameId = newQuiz.quizId;
+          socketManager.addUser(user, newQuiz.quizId); // add user to the game_room
+          newQuiz.addPlayer(user); // add user to the quiz
+          // send a message to the game_room to notify the user that a new game has been created
+          socketManager.broadcast(
+            newQuiz.quizId,
+            JSON.stringify({
+              type: "GAME_ADDED",
+              quizId: newQuiz.quizId,
+            })
+          );
+
+          break;
+        case "JOIN_GAME":
+          break;
+        case "START_GAME":
+          break;
+        case "ANSWER_QUESTION":
+          break;
+        case "NEXT_QUESTION":
+          break;
+        default:
+          console.error("Unknown message type:", message.type);
+      }
     });
   }
 }

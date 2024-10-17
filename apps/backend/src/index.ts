@@ -26,6 +26,8 @@ wss.on("connection", (socket: WebSocket, req: Request) => {
   const user = extractAuthUser(token, socket);
   gameManager.addUser(user);
 
+  console.log("User Connected", user.userId, user.name);
+
   socket.on("disconnect", () => {
     console.log("User Disconnected", socket.url);
     gameManager.removeUser(socket);
