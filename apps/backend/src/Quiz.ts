@@ -44,10 +44,10 @@ export class Quiz {
 
   // Player management
   public addPlayer(user: Player): string {
-    this.players.set(user.id, user);
-    this.scoreboard.addPlayer(user.id, user);
+    this.players.set(user.userId, user);
+    this.scoreboard.addPlayer(user.userId, user);
     this.notifyObservers();
-    return user.id;
+    return user.userId;
   }
 
   public removePlayer(id: string): void {

@@ -13,6 +13,14 @@ export interface userJwtClaims {
 }
 
 export const extractAuthUser = (token: string, socket: WebSocket): User => {
-  const decoded = jwt.verify(token, JWT_SECRET) as userJwtClaims;
-  return new User(socket, decoded);
+  if (token) {
+    const decoded = jwt.verify(token, JWT_SECRET) as userJwtClaims;
+    return new User(socket, decoded);
+  } else {
+    return new User(socket, {
+      userId: "1",
+      name: "Rohit",
+      avatar: "https://i.imgur.com/tYbi9eI.png",
+    });
+  }
 };

@@ -4,7 +4,7 @@ import { userJwtClaims } from "./auth";
 
 export class User {
   public socket: WebSocket;
-  public id: string;
+  // public id: string;
   public userId: string;
   public name: string;
   public avatar: string;
@@ -12,7 +12,7 @@ export class User {
   constructor(socket: WebSocket, userJwtClaims: userJwtClaims) {
     this.socket = socket;
     this.userId = userJwtClaims.userId;
-    this.id = randomUUID();
+    // this.id = randomUUID();
     this.name = userJwtClaims.name;
     this.avatar = userJwtClaims.avatar;
   }

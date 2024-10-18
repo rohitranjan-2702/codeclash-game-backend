@@ -20,3 +20,13 @@
    - pnpm dev
 4. Open the browser and navigate to http://localhost:3000
 5. You are ready to go!
+
+```bash
+
+CREATE_GAME
+JOIN_GAME
+START_GAME
+ANSWER_QUESTION
+NEXT_QUESTION
+
+```
