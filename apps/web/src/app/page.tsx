@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import QuizComponent from "@/components/quiz-component";
 import { useSocket } from "@/hooks/useSocket";
 import { useEffect, useState } from "react";
 
@@ -17,10 +18,24 @@ const toekn_1 =
 export default function Home() {
   const [token, setToken] = useState<string>(toekn_1);
   const [input, setInput] = useState<string>("");
-  const [input2, setInput2] = useState<string>("");
+  const [gameId, setGameId] = useState<string>("");
   const socket = useSocket(token);
   const [msg, setMsg] = useState<any[]>([]);
   const [gameState, setGameState] = useState(null);
+  const [questions, setQuestions] = useState<Question[]>([
+    {
+      id: "1",
+      text: "What is the capital of France?",
+      options: ["London", "Berlin", "Paris", "Madrid"],
+      correctAnswer: 2,
+    },
+    {
+      id: "2",
+      text: "Which planet is known as the Red Planet?",
+      options: ["Venus", "Mars", "Jupiter", "Saturn"],
+      correctAnswer: 1,
+    },
+  ]);
 
   useEffect(() => {
     if (!socket) {
@@ -31,6 +46,9 @@ export default function Home() {
       console.log(message);
       if (message.gameState) {
         setGameState(message.gameState);
+        if (message.gameState[0]?.questions.length > 0) {
+          setQuestions(message.gameState[0].questions);
+        }
       }
 
       setMsg((prev) => [...prev, message]);
@@ -101,54 +119,98 @@ export default function Home() {
       console.log("msg not sent", create_game_message);
     }
   };
+
+  const renderLoginForm = () => {
+    <form onSubmit={() => setToken(input)}>
+      <input
+        type="text"
+        value={input}
+        className="text-black"
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Enter your username"
+        required
+      />
+      <button type="submit">Join Game</button>
+    </form>;
+  };
+
+  const renderJoinForm = () => {
+    <form onSubmit={() => joinGame(gameId)}>
+      <input
+        type="text"
+        value={gameId}
+        className="text-black"
+        onChange={(e) => setGameId(e.target.value)}
+        placeholder="Enter your username"
+        required
+      />
+      <button type="submit">Join Game</button>
+    </form>;
+  };
+
+  const createNewGame = () => {
+    <button
+      onClick={() => createGame()}
+      className="bg-white text-black p-2 rounded-full"
+    >
+      Init Game
+    </button>;
+  };
+
+  const renderStartButton = () => {
+    <button
+      onClick={() => startGame(gameId)}
+      className="bg-green-500 text-black p-2 rounded-full"
+    >
+      Start Game
+    </button>;
+  };
+
+  // const renderGameContent = () => {
+  //   switch (gameState[0]?.status) {
+  //     case "Waiting":
+  //       return renderWaitingRoom();
+  //     case "InProgress":
+  //       return (
+  //         <>
+  //           {renderQuestion()}
+  //           <button onClick={nextQuestion}>Next Question</button>
+  //           {renderLeaderboard()}
+  //         </>
+  //       );
+  //     case "Finished":
+  //       return (
+  //         <>
+  //           <h2>Game Over!</h2>
+  //           {renderLeaderboard()}
+  //         </>
+  //       );
+  //     default:
+  //       return renderJoinForm();
+  //   }
+  // };
+
   return (
     <div className="flex justify-center items-center h-screen bg-black w-full">
-      <input
-        type="text"
-        className="text-black"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <button
-        onClick={() => setToken(input)}
-        className="bg-white text-black p-2 rounded-full"
-      >
-        Change User
-      </button>
-      <button
-        onClick={() => createGame()}
-        className="bg-white text-black p-2 rounded-full"
-      >
-        Init Game
-      </button>
-      <input
-        type="text"
-        className="text-black"
-        value={input2}
-        onChange={(e) => setInput2(e.target.value)}
-      />
-      <button
-        onClick={() => joinGame(input2)}
-        className="bg-blue-500 text-black p-2 rounded-full"
-      >
-        Join Game
-      </button>
-      <button
-        onClick={() => startGame(input2)}
-        className="bg-green-500 text-black p-2 rounded-full"
-      >
-        Start Game
-      </button>
-      <button className="bg-gray-900 text-orange-500 p-2 rounded-full">
-        {gameState && gameState[0].status === 0 ? "Waiting" : "In Progress"}
-      </button>
+      <div>
+        <QuizComponent questions={questions} />
+      </div>
+
       <div className="flex flex-col gap-4 items-center justify-center">
+        <h1>Multiplayer Quiz Game</h1>
+        <button className="bg-gray-900 text-orange-500 p-2 rounded-full">
+          {gameState && gameState[0]?.status === 0 ? "Waiting" : "In Progress"}
+        </button>
+        {/* {renderGameContent()} */}
+      </div>
+
+      {/* <div className="flex flex-col gap-4 items-center justify-center">
         {msg.map((m, i) => (
           <div key={i} className="text-sm text-white p-2 rounded-full max-w-24">
             {JSON.stringify(m)}
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }

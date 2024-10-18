@@ -88,6 +88,9 @@ export class GameManager {
           newQuiz.addPlayer(user); // add user to the quiz
           newQuiz.addQuestions(message.questions); // add questions
 
+          console.log("New quiz created:", newQuiz);
+          this.games.push(newQuiz);
+
           // send a message to the game_room to notify the user that a new game has been created
           socketManager.broadcast(
             newQuiz.quizId,
@@ -99,7 +102,8 @@ export class GameManager {
                   quizId: x.quizId,
                   quizName: x.quizName,
                   status: x.getStatus(),
-                  players: this.getPlayers(x.quizId).map((y) => {
+                  questions: x.getQuestions(),
+                  players: x.getPlayers().map((y) => {
                     return {
                       name: y.name,
                       userId: y.userId,
@@ -110,8 +114,6 @@ export class GameManager {
               }),
             })
           );
-          console.log("New quiz created:", newQuiz);
-          this.games.push(newQuiz);
 
           break;
 
@@ -182,6 +184,7 @@ export class GameManager {
                   quizId: x.quizId,
                   quizName: x.quizName,
                   status: x.getStatus(),
+                  questions: x.getQuestions(),
                   players: this.getPlayers(x.quizId).map((y) => {
                     return {
                       name: y.name,
@@ -227,6 +230,7 @@ export class GameManager {
             console.error("Game doesn't exists.");
           }
           break;
+
         case "ANSWER_QUESTION":
           break;
         case "NEXT_QUESTION":

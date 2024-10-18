@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { Scoreboard } from "./Scoreboard";
 import { randomUUID } from "node:crypto";
-import { GameStatus, Player, Question } from "./types/types";
+import { Player, Question } from "./types/types";
 
 // Enums
 
@@ -18,7 +18,7 @@ export class Quiz {
   private players: Map<string, Player>;
   private questions: Question[];
   private currentQuestionIndex: number;
-  private status: GameStatus;
+  private status: "WAITING" | "IN_PROGRESS" | "GAME_OVER";
   private observers: GameObserver[];
   private scoreboard: Scoreboard;
 
@@ -27,10 +27,10 @@ export class Quiz {
     this.quizName = quizName ?? "Random Quiz";
     this.questions = [];
     this.currentQuestionIndex = 0;
-    this.status = GameStatus.Waiting;
+    this.status = "WAITING";
     this.observers = [];
     this.scoreboard = new Scoreboard();
-    this.quizId = quizId ?? randomUUID();
+    this.quizId = quizId ?? randomUUID().slice(0, 8);
     // Listen for scoreboard updates
     this.scoreboard.on("update", () => this.notifyObservers());
   }
@@ -72,7 +72,7 @@ export class Quiz {
   // Game flow
   public startGame(): void {
     if (this.players.size > 1 && this.questions.length > 0) {
-      this.status = GameStatus.InProgress;
+      this.status = "IN_PROGRESS";
       this.currentQuestionIndex = 0;
       this.scoreboard.resetScores();
       this.notifyObservers();
@@ -83,7 +83,7 @@ export class Quiz {
 
   public submitAnswer(playerId: string, answerIndex: number): void {
     const currentQuestion = this.getCurrentQuestion();
-    if (currentQuestion && this.status === GameStatus.InProgress) {
+    if (currentQuestion && this.status === "IN_PROGRESS") {
       if (answerIndex === currentQuestion.correctAnswer) {
         this.scoreboard.updateScore(playerId, 1);
       }
@@ -101,7 +101,7 @@ export class Quiz {
   }
 
   public endGame(): void {
-    this.status = GameStatus.Finished;
+    this.status = "GAME_OVER";
     this.notifyObservers();
   }
 
@@ -124,8 +124,12 @@ export class Quiz {
   }
 
   // Getters
-  public getStatus(): GameStatus {
+  public getStatus(): "WAITING" | "IN_PROGRESS" | "GAME_OVER" {
     return this.status;
+  }
+
+  public getQuestions(): Question[] {
+    return this.questions;
   }
 
   public getLeaderboard(): Player[] {
