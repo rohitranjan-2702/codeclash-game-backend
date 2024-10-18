@@ -232,8 +232,10 @@ export class GameManager {
           break;
 
         case "ANSWER_QUESTION":
+          // calculate score on the basis of correct answer and timing
           break;
         case "NEXT_QUESTION":
+          // update the current question and send the new question to the client
           break;
         default:
           console.error("Unknown message type:", message.type);
