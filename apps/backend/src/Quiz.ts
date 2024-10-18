@@ -61,17 +61,8 @@ export class Quiz {
   }
 
   // Question management
-  public addQuestion(
-    text: string,
-    options: string[],
-    correctAnswer: number
-  ): void {
-    this.questions.push({
-      id: uuidv4(),
-      text,
-      options,
-      correctAnswer,
-    });
+  public addQuestions(questions: Question[]): void {
+    this.questions.push(...questions);
   }
 
   public getCurrentQuestion(): Question | null {

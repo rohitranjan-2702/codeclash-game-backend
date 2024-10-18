@@ -38,6 +38,7 @@ class SocketManager {
   }
 
   addUser(user: User, roomId: string) {
+    console.log(this.interestedSockets);
     this.interestedSockets.set(roomId, [
       ...(this.interestedSockets.get(roomId) || []),
       user,
@@ -51,6 +52,8 @@ class SocketManager {
       console.error("No users in room?");
       return;
     }
+
+    console.log("broadcasting", message, users);
 
     // broadcasting the message to all users in the room
     users.forEach((user) => {
