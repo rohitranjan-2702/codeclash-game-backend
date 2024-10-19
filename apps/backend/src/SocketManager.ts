@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { WebSocket } from "ws";
 import { userJwtClaims } from "./auth";
 
