@@ -3,11 +3,12 @@ import { Scoreboard } from "./Scoreboard";
 import { randomUUID } from "node:crypto";
 import { Player, Question } from "./types/types";
 
-// Enums
+type DifficultyLevel = "easy" | "medium" | "hard";
 
-// Observer pattern for game events
-interface GameObserver {
-  update(Quiz: Quiz): void;
+interface DifficultyMultiplier {
+  easy: number;
+  medium: number;
+  hard: number;
 }
 
 // Game State class using Singleton pattern
@@ -15,29 +16,32 @@ export class Quiz {
   private static instance: Quiz;
   public quizId: string;
   public quizName: string;
+  public admin: string;
   private players: Map<string, Player>;
   private questions: Question[];
-  private currentQuestionIndex: number;
+  public currentQuestionIndex: number;
   private status: "WAITING" | "IN_PROGRESS" | "GAME_OVER";
-  private observers: GameObserver[];
   private scoreboard: Scoreboard;
 
-  constructor(quizName: string, quizId?: string) {
+  constructor(
+    quizName: string,
+    admin: string,
+    questions?: Question[],
+    quizId?: string
+  ) {
     this.players = new Map();
     this.quizName = quizName ?? "Random Quiz";
-    this.questions = [];
+    this.questions = questions ?? [];
+    this.admin = admin;
     this.currentQuestionIndex = 0;
     this.status = "WAITING";
-    this.observers = [];
     this.scoreboard = new Scoreboard();
     this.quizId = quizId ?? randomUUID().slice(0, 8);
-    // Listen for scoreboard updates
-    this.scoreboard.on("update", () => this.notifyObservers());
   }
 
   public static getInstance(): Quiz {
     if (!Quiz.instance) {
-      Quiz.instance = new Quiz("Random Quiz");
+      Quiz.instance = new Quiz("Random Quiz", "user1");
     }
     return Quiz.instance;
   }
@@ -46,14 +50,12 @@ export class Quiz {
   public addPlayer(user: Player): string {
     this.players.set(user.userId, user);
     this.scoreboard.addPlayer(user.userId, user);
-    this.notifyObservers();
     return user.userId;
   }
 
   public removePlayer(id: string): void {
     this.players.delete(id);
     this.scoreboard.removePlayer(id);
-    this.notifyObservers();
   }
 
   public getPlayers(): Player[] {
@@ -75,26 +77,31 @@ export class Quiz {
       this.status = "IN_PROGRESS";
       this.currentQuestionIndex = 0;
       this.scoreboard.resetScores();
-      this.notifyObservers();
     } else {
       throw new Error("Not enough players or questions to start the game");
     }
   }
 
-  public submitAnswer(playerId: string, answerIndex: number): void {
+  public submitAnswer(
+    playerId: string,
+    answerIndex: number,
+    timeTaken: number,
+    difficulty: DifficultyLevel
+  ): void {
     const currentQuestion = this.getCurrentQuestion();
     if (currentQuestion && this.status === "IN_PROGRESS") {
       if (answerIndex === currentQuestion.correctAnswer) {
-        this.scoreboard.updateScore(playerId, 1);
+        const score = this.calculateScore(timeTaken, difficulty);
+        this.scoreboard.updateScore(playerId, score);
+      } else {
+        this.scoreboard.updateScore(playerId, 0);
       }
-      this.notifyObservers();
     }
   }
 
   public nextQuestion(): void {
     if (this.currentQuestionIndex < this.questions.length - 1) {
       this.currentQuestionIndex++;
-      this.notifyObservers();
     } else {
       this.endGame();
     }
@@ -102,25 +109,6 @@ export class Quiz {
 
   public endGame(): void {
     this.status = "GAME_OVER";
-    this.notifyObservers();
-  }
-
-  // Observer pattern methods
-  public addObserver(observer: GameObserver): void {
-    this.observers.push(observer);
-  }
-
-  public removeObserver(observer: GameObserver): void {
-    const index = this.observers.indexOf(observer);
-    if (index > -1) {
-      this.observers.splice(index, 1);
-    }
-  }
-
-  private notifyObservers(): void {
-    for (const observer of this.observers) {
-      observer.update(this);
-    }
   }
 
   // Getters
@@ -134,6 +122,27 @@ export class Quiz {
 
   public getLeaderboard(): Player[] {
     return this.scoreboard.getLeaderboard();
+  }
+
+  private calculateScore(
+    timeTaken: number,
+    difficulty: DifficultyLevel
+  ): number {
+    const baseScore = 1000;
+    const timeMultiplier = 0.9; // Reduce score by 10% for each second
+
+    const difficultyMultipliers: DifficultyMultiplier = {
+      easy: 1,
+      medium: 1.5,
+      hard: 2,
+    };
+
+    const score =
+      baseScore *
+      Math.pow(timeMultiplier, timeTaken) *
+      difficultyMultipliers[difficulty];
+
+    return Math.round(Math.max(0, score)); // Ensures score is never negative
   }
 }
 

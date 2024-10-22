@@ -82,7 +82,25 @@ export class GameManager {
       switch (message.type) {
         // search for a pending game in the list of games, if not found, create a new one
         case "CREATE_GAME":
-          const newQuiz = new Quiz(message.quizName);
+          /*
+            {
+                "type": "CREATE_GAME",
+                "quizName": "QUIZZZ",
+                "questions": [{
+                  "id": "1",
+                  "text": "What is the capital of France?",
+                  "options": ["London", "Berlin", "Paris", "Madrid"],
+                  "correctAnswer": 2
+                },
+                {
+                  "id": "2",
+                  "text": "Which planet is known as the Red Planet?",
+                  "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+                  "correctAnswer": 1
+                }]
+            }
+          */
+          const newQuiz = new Quiz(message.quizName, user.userId);
 
           socketManager.addUser(user, newQuiz.quizId); // add user to the game_room
           newQuiz.addPlayer(user); // add user to the quiz
@@ -129,6 +147,7 @@ export class GameManager {
                   return {
                     quizId: x.quizId,
                     quizName: x.quizName,
+                    leaderboard: x.getLeaderboard(),
                     status: x.getStatus(),
                     players: this.getPlayers(x.quizId).map((y) => {
                       return {
@@ -200,16 +219,23 @@ export class GameManager {
           break;
 
         case "START_GAME":
-          if (this.games.find((x) => x.quizId === message.quizId)) {
+          const game_to_start = this.games.find(
+            (x) => x.quizId === message.quizId
+          );
+          const admin = game_to_start?.admin;
+          if (game_to_start && admin === user.userId) {
             this.games.find((x) => x.quizId === message.quizId)?.startGame();
 
             socketManager.broadcast(
               message.quizId,
               JSON.stringify({
-                type: "USER_JOINED",
+                type: "GAME_STARTED",
                 userId: user.userId,
                 name: user.name,
                 quizId: message.quizId,
+                leaderboard: this.games
+                  .find((x) => x.quizId === message.quizId)
+                  ?.getLeaderboard(),
                 gameState: this.getGames().map((x) => {
                   return {
                     quizId: x.quizId,
@@ -228,14 +254,131 @@ export class GameManager {
             );
           } else {
             console.error("Game doesn't exists.");
+            socketManager.broadcast(
+              message.quizId,
+              JSON.stringify({
+                type: "GAME_ERROR",
+                error: "Game doesn't exists.",
+                userId: user.userId,
+              })
+            );
           }
           break;
 
         case "ANSWER_QUESTION":
-          // calculate score on the basis of correct answer and timing
+          // {"type": "ANSWER_QUESTION", "answer": 2, "timeTaken": 1000, "difficulty": "easy"}
+          // {type: "ANSWER_QUESTION", answer: 1, timeTaken: 1500, difficulty: "easy"}
+          const game = this.games.find((x) => x.quizId === message.quizId);
+          if (game) {
+            game.submitAnswer(
+              user.userId,
+              message.answer,
+              message.timeTaken,
+              message.difficulty ?? "medium" // default difficulty level
+            );
+
+            // Broadcast the answer result to all players
+            socketManager.broadcast(
+              message.quizId,
+              JSON.stringify({
+                type: "LEADERBOARD_UPDATE",
+                gameState: this.getGames().map((x) => {
+                  return {
+                    quizId: x.quizId,
+                    quizName: x.quizName,
+                    leaderboard: game.getLeaderboard(),
+                    status: x.getStatus(),
+                    players: this.getPlayers(x.quizId).map((y) => {
+                      return {
+                        name: y.name,
+                        userId: y.userId,
+                        avatar: y.avatar,
+                      };
+                    }),
+                  };
+                }),
+              })
+            );
+          } else {
+            console.error("Game not found for quiz ID:", message.quizId);
+            socketManager.broadcast(
+              message.quizId,
+              JSON.stringify({
+                type: "GAME_ERROR",
+                error: "Game not found for quiz ID:",
+                userId: user.userId,
+              })
+            );
+          }
           break;
+
         case "NEXT_QUESTION":
           // update the current question and send the new question to the client
+          const gameToUpdate = this.games.find(
+            (x) => x.quizId === message.quizId
+          );
+          if (gameToUpdate) {
+            gameToUpdate.nextQuestion();
+
+            if (
+              gameToUpdate.currentQuestionIndex <
+              gameToUpdate.getQuestions().length - 1
+            ) {
+              socketManager.broadcast(
+                message.quizId,
+                JSON.stringify({
+                  type: "NEXT_QUESTION",
+                  gameState: this.getGames().map((x) => {
+                    return {
+                      quizId: x.quizId,
+                      quizName: x.quizName,
+                      leaderboard: gameToUpdate.getLeaderboard(),
+                      status: x.getStatus(),
+                      players: this.getPlayers(x.quizId).map((y) => {
+                        return {
+                          name: y.name,
+                          userId: y.userId,
+                          avatar: y.avatar,
+                        };
+                      }),
+                    };
+                  }),
+                })
+              );
+            } else {
+              socketManager.broadcast(
+                message.quizId,
+                JSON.stringify({
+                  type: "GAME_OVER",
+                  gameState: this.getGames().map((x) => {
+                    return {
+                      quizId: x.quizId,
+                      quizName: x.quizName,
+                      status: x.getStatus(),
+                      players: this.getPlayers(x.quizId).map((y) => {
+                        return {
+                          name: y.name,
+                          userId: y.userId,
+                          avatar: y.avatar,
+                        };
+                      }),
+                    };
+                  }),
+                })
+              );
+            }
+          } else {
+            console.error("Game not found for quiz ID:", message.quizId);
+            socketManager.broadcast(
+              message.quizId,
+              JSON.stringify({
+                type: "GAME_ERROR",
+                error: "Game not found for quiz ID:",
+                userId: user.userId,
+              })
+            );
+          }
+
           break;
         default:
           console.error("Unknown message type:", message.type);

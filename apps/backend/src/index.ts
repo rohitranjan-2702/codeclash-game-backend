@@ -25,8 +25,8 @@ async function main() {
   );
   const wss = new WebSocketServer({ server: httpServer });
 
-  const kafkaProducer = new KafkaProducer(KAFKA_BROKERS, KAFKA_CLIENT_ID);
-  await kafkaProducer.connect();
+  // const kafkaProducer = new KafkaProducer(KAFKA_BROKERS, KAFKA_CLIENT_ID);
+  // await kafkaProducer.connect();
 
   const gameManager = GameManager.getInstance();
 
@@ -94,7 +94,7 @@ async function main() {
   // Graceful shutdown
   process.on("SIGINT", async () => {
     console.log("Shutting down...");
-    await kafkaProducer.disconnect();
+    // await kafkaProducer.disconnect();
     process.exit(0);
   });
 }
