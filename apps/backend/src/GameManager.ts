@@ -30,30 +30,11 @@ export class GameManager {
 
   addUser(user: User) {
     if (this.users.find((x) => x.userId === user.userId)) {
-      console.error("User already exists in the list?");
-      return;
+      this.users = this.users.filter((x) => x.userId !== user.userId);
     }
+    const socket = user.socket;
     this.users.push(user);
     this.addHandler(user);
-    console.log("ADDING USER", user.name);
-  }
-
-  removeUser(socket: WebSocket) {
-    const user = this.users.find((user) => user.socket === socket);
-    if (!user) {
-      console.error("User not found?");
-      return;
-    }
-    this.users = this.users.filter((user) => user.socket !== socket);
-    socketManager.removeUser(user);
-  }
-
-  removeGame(gameId: string) {
-    this.games = this.games.filter((g) => g.quizId !== gameId);
-  }
-
-  private addHandler(user: User) {
-    const socket = user.socket;
     socket.send(
       JSON.stringify({
         type: "USER_CONNECTED",
@@ -74,6 +55,25 @@ export class GameManager {
         }),
       })
     );
+    console.log("ADDING USER", user.name);
+  }
+
+  removeUser(socket: WebSocket) {
+    const user = this.users.find((user) => user.socket === socket);
+    if (!user) {
+      console.error("User not found?");
+      return;
+    }
+    this.users = this.users.filter((user) => user.socket !== socket);
+    socketManager.removeUser(user);
+  }
+
+  removeGame(gameId: string) {
+    this.games = this.games.filter((g) => g.quizId !== gameId);
+  }
+
+  private addHandler(user: User) {
+    const socket = user.socket;
 
     socket.on("message", async (data) => {
       const message = JSON.parse(data.toString());
@@ -216,6 +216,53 @@ export class GameManager {
             })
           );
 
+          break;
+
+        case "LIST_GAMES":
+          socket.send(
+            JSON.stringify({
+              type: "LIST_GAMES",
+              games: this.getGames().map((x) => {
+                return {
+                  quizId: x.quizId,
+                  quizName: x.quizName,
+                  admin: x.admin,
+                  status: x.getStatus(),
+                  players: this.getPlayers(x.quizId).map((y) => {
+                    return {
+                      name: y.name,
+                      userId: y.userId,
+                      avatar: y.avatar,
+                    };
+                  }),
+                };
+              }),
+            })
+          );
+          break;
+
+        case "EXIT_GAME":
+          const game_to_exit = this.games.find(
+            (x) => x.quizId === message.quizId
+          );
+
+          if (game_to_exit) {
+            game_to_exit.removePlayer(user.userId);
+            socketManager.broadcast(
+              message.quizId,
+              JSON.stringify({
+                type: "PLAYER_LEFT",
+                playerId: user.userId,
+                players: game_to_exit.getPlayers().map((x) => {
+                  return {
+                    userId: x.userId,
+                    name: x.name,
+                    avatar: x.avatar,
+                  };
+                }),
+              })
+            );
+          }
           break;
 
         case "START_GAME":
@@ -380,6 +427,7 @@ export class GameManager {
           }
 
           break;
+
         default:
           console.error("Unknown message type:", message.type);
       }

@@ -33,6 +33,7 @@ async function main() {
   wss.on("connection", (socket: WebSocket, req: Request) => {
     //@ts-ignore
     const token: string = url.parse(req.url, true).query.token;
+    console.log("token", token);
     const user = extractAuthUser(token, socket);
 
     console.log(req.url);
