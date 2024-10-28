@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { Scoreboard } from "./Scoreboard";
 import { randomUUID } from "node:crypto";
-import { Player, Question } from "./types/types";
+import { LeaderboardItem, Player, Question } from "./types/types";
 
 type DifficultyLevel = "easy" | "medium" | "hard";
 
@@ -98,7 +98,7 @@ export class Quiz {
         const score = this.calculateScore(timeTaken, difficulty);
         this.scoreboard.updateScore(playerId, score);
       } else {
-        this.scoreboard.updateScore(playerId, 0);
+        this.scoreboard.updateScore(playerId, -100);
       }
     }
   }
@@ -124,7 +124,7 @@ export class Quiz {
     return this.questions;
   }
 
-  public getLeaderboard(): Player[] {
+  public getLeaderboard(): LeaderboardItem[] {
     return this.scoreboard.getLeaderboard();
   }
 

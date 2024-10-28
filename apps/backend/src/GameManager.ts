@@ -2,6 +2,9 @@ import { WebSocket } from "ws";
 import { Quiz } from "./Quiz";
 import { socketManager, User } from "./SocketManager";
 import { Player } from "./types/types";
+import db from "./db";
+
+const collection = db.collection("leaderboard");
 
 export class GameManager {
   private static instance: GameManager;
@@ -296,6 +299,9 @@ export class GameManager {
                     quizId: x.quizId,
                     quizName: x.quizName,
                     currentQuestion: x.getCurrentQuestion(),
+                    currentQuestionIndex: this.games.find(
+                      (x) => x.quizId === message.quizId
+                    )?.currentQuestionIndex,
                     status: x.getStatus(),
                     players: this.getPlayers(x.quizId).map((y) => {
                       return {
@@ -389,6 +395,8 @@ export class GameManager {
                     return {
                       quizId: x.quizId,
                       quizName: x.quizName,
+                      currentQuestion: x.getCurrentQuestion(),
+                      currentQuestionIndex: gameToUpdate.currentQuestionIndex,
                       status: x.getStatus(),
                       players: this.getPlayers(x.quizId).map((y) => {
                         return {
@@ -422,6 +430,19 @@ export class GameManager {
                   }),
                 })
               );
+
+              const ress = this.games
+                .find((x) => x.quizId === message.quizId)
+                ?.getLeaderboard()
+                .map((x) => ({
+                  quizId: message.quizId,
+                  name: x.name,
+                  score: x.score,
+                  userId: x.userId,
+                  avatar: x.avatar,
+                }));
+
+              collection.insertMany(ress ?? []);
             }
           } else {
             console.error("Game not found for quiz ID:", message.quizId);

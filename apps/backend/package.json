@@ -15,11 +15,11 @@
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
     "cors": "^2.8.5",
-    "db": "workspace:*",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
+    "mongodb": "^6.10.0",
     "nodemon": "^3.1.7",
     "uuid": "^10.0.0",
     "ws": "^8.18.0"

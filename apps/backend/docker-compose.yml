@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  api-service:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - path: ./default.env
+        required: true

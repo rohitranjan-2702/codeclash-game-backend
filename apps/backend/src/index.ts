@@ -1,4 +1,3 @@
-import prisma from "db";
 import { WebSocket } from "ws";
 import express, { Request, Response } from "express";
 import url from "url";
@@ -6,11 +5,10 @@ import cors from "cors";
 import { GameManager } from "./GameManager";
 import { extractAuthUser } from "./auth";
 import { WebSocketServer } from "ws";
-import { Quiz } from "./Quiz";
-import { randomUUID } from "crypto";
+
 import { KafkaProducer } from "./Producer";
 
-const KAFKA_BROKERS = ["localhost:9092"]; // Replace with your Redpanda brokers
+const KAFKA_BROKERS = [process.env.BROKERS || "localhost:9092"]; // Replace with your Redpanda brokers
 const KAFKA_CLIENT_ID = "quiz-game-producer";
 
 const PORT = process.env.PORT || 8000;
@@ -25,8 +23,7 @@ async function main() {
   );
   const wss = new WebSocketServer({ server: httpServer });
 
-  // const kafkaProducer = new KafkaProducer(KAFKA_BROKERS, KAFKA_CLIENT_ID);
-  // await kafkaProducer.connect();
+  const kafkaProducer = new KafkaProducer(KAFKA_BROKERS, KAFKA_CLIENT_ID);
 
   const gameManager = GameManager.getInstance();
 
@@ -50,11 +47,6 @@ async function main() {
 
   app.get("/", (req: Request, res: Response) => {
     res.send("Server Running Fine 🚀");
-  });
-
-  app.get("/users", async (req: Request, res: Response) => {
-    const users = await prisma.user.findMany();
-    res.json(users);
   });
 
   app.get("/games", async (req: Request, res: Response) => {
