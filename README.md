@@ -1,3 +1,6 @@
+![image](https://github.com/user-attachments/assets/7c4c46db-902a-4a4d-8c1f-e3d9cbab5199)
+
+
 # Techstack:
 
 - Nextjs
@@ -9,17 +12,17 @@
 - MongoDB
 - Turborepo
 
-# How to run the project:
+# How to run the backend:
 
 1. Clone the project
    - git clone https://github.com/rohitranjan-2702/random-monorepo-game.git
-2. Install dependencies
-   - pnpm install
-3. Run the project
-   - pnpm build
-   - pnpm dev
-4. Open the browser and navigate to http://localhost:3000
-5. You are ready to go!
+2. Run `cd apps/backend`
+3. Install dependencies
+   - `pnpm install`
+4. Run the project
+   - `pnpm build`
+   - `pnpm dev`
+5. The websocket server starts listening on ws://localhost:8000
 
 ```bash
 
