@@ -16,7 +16,7 @@ export class Quiz {
   private static instance: Quiz;
   public quizId: string;
   public quizName: string;
-  public admin: string;
+  public admin: Player;
   private players: Map<string, Player>;
   private questions: Question[];
   public currentQuestionIndex: number;
@@ -25,7 +25,7 @@ export class Quiz {
 
   constructor(
     quizName: string,
-    admin: string,
+    admin: Player,
     questions?: Question[],
     quizId?: string
   ) {
@@ -41,7 +41,11 @@ export class Quiz {
 
   public static getInstance(): Quiz {
     if (!Quiz.instance) {
-      Quiz.instance = new Quiz("Random Quiz", "user1");
+      Quiz.instance = new Quiz("Random Quiz", {
+        userId: "user1",
+        name: "user1",
+        avatar: "okok",
+      });
     }
     return Quiz.instance;
   }

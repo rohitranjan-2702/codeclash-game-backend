@@ -100,7 +100,7 @@ export class GameManager {
                 }]
             }
           */
-          const newQuiz = new Quiz(message.quizName, user.userId);
+          const newQuiz = new Quiz(message.quizName, user);
 
           socketManager.addUser(user, newQuiz.quizId); // add user to the game_room
           newQuiz.addPlayer(user); // add user to the quiz
@@ -109,27 +109,35 @@ export class GameManager {
           console.log("New quiz created:", newQuiz);
           this.games.push(newQuiz);
 
+          const gameState = this.getGames().filter(
+            (x) => x.quizId === newQuiz.quizId
+          );
+
+          console.log(gameState);
+
           // send a message to the game_room to notify the user that a new game has been created
           socketManager.broadcast(
             newQuiz.quizId,
             JSON.stringify({
               type: "GAME_ADDED",
               quizId: newQuiz.quizId,
-              gameState: this.getGames().map((x) => {
-                return {
-                  quizId: x.quizId,
-                  quizName: x.quizName,
-                  status: x.getStatus(),
-                  questions: x.getQuestions(),
-                  players: x.getPlayers().map((y) => {
-                    return {
-                      name: y.name,
-                      userId: y.userId,
-                      avatar: y.avatar,
-                    };
-                  }),
-                };
-              }),
+              gameState: this.getGames()
+                .filter((g) => g.quizId === newQuiz.quizId)
+                .map((x) => {
+                  return {
+                    quizId: x.quizId,
+                    quizName: x.quizName,
+                    status: x.getStatus(),
+                    questions: x.getQuestions(),
+                    players: x.getPlayers().map((y) => {
+                      return {
+                        name: y.name,
+                        userId: y.userId,
+                        avatar: y.avatar,
+                      };
+                    }),
+                  };
+                }),
             })
           );
 
@@ -270,7 +278,7 @@ export class GameManager {
             (x) => x.quizId === message.quizId
           );
           const admin = game_to_start?.admin;
-          if (game_to_start && admin === user.userId) {
+          if (game_to_start && admin?.userId === user.userId) {
             this.games.find((x) => x.quizId === message.quizId)?.startGame();
 
             socketManager.broadcast(
@@ -287,6 +295,7 @@ export class GameManager {
                   return {
                     quizId: x.quizId,
                     quizName: x.quizName,
+                    currentQuestion: x.getCurrentQuestion(),
                     status: x.getStatus(),
                     players: this.getPlayers(x.quizId).map((y) => {
                       return {
@@ -329,11 +338,11 @@ export class GameManager {
               message.quizId,
               JSON.stringify({
                 type: "LEADERBOARD_UPDATE",
+                leaderboard: game.getLeaderboard(),
                 gameState: this.getGames().map((x) => {
                   return {
                     quizId: x.quizId,
                     quizName: x.quizName,
-                    leaderboard: game.getLeaderboard(),
                     status: x.getStatus(),
                     players: this.getPlayers(x.quizId).map((y) => {
                       return {
@@ -374,12 +383,12 @@ export class GameManager {
               socketManager.broadcast(
                 message.quizId,
                 JSON.stringify({
-                  type: "NEXT_QUESTION",
+                  type: "LEADERBOARD_UPDATE",
+                  leaderboard: gameToUpdate.getLeaderboard(),
                   gameState: this.getGames().map((x) => {
                     return {
                       quizId: x.quizId,
                       quizName: x.quizName,
-                      leaderboard: gameToUpdate.getLeaderboard(),
                       status: x.getStatus(),
                       players: this.getPlayers(x.quizId).map((y) => {
                         return {
